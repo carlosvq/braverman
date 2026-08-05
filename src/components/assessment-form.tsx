@@ -19,6 +19,10 @@ import {
   SUBCATEGORY_ORDER,
   type SectionId,
 } from "@/data/questions";
+import {
+  NATURE_DEFICIENCY_DESCRIPTIONS,
+  NATURE_DOMINANCE_DESCRIPTIONS,
+} from "@/data/nature-descriptions";
 import { openResultsMailto } from "@/lib/email";
 import {
   answeredCount,
@@ -221,7 +225,7 @@ function AppShell({
             />
             <div className="min-w-0 border-l border-[var(--parc-border-strong)] pl-2.5 sm:pl-3">
               <h1 className="text-xs font-medium text-[var(--parc-heading)] sm:text-sm">
-                Nature Assessment
+                Braverman Test
               </h1>
             </div>
           </div>
@@ -288,19 +292,18 @@ function AssessmentMap({
                 type="button"
                 onClick={() => onSelectSection(index)}
                 aria-current={current ? "step" : undefined}
-                aria-label={`${NATURE_LABELS[section.nature]}${
-                  complete ? ", complete" : current ? ", current" : ", remaining"
-                }`}
+                aria-label={`${NATURE_LABELS[section.nature]}${complete ? ", complete" : current ? ", current" : ", remaining"
+                  }`}
                 className={cn(
                   "relative min-h-9 overflow-hidden rounded-md border px-1 py-1.5 text-center text-[10px] font-medium leading-tight transition-colors sm:min-h-10 sm:text-xs",
                   current &&
-                    "border-[var(--parc-heading)] bg-[var(--parc-button-bg)] text-white ring-1 ring-[var(--parc-heading)]",
+                  "border-[var(--parc-heading)] bg-[var(--parc-button-bg)] text-white ring-1 ring-[var(--parc-heading)]",
                   !current &&
-                    complete &&
-                    "border-[var(--parc-border-strong)] bg-[#e9f2d2] text-[var(--parc-heading)]",
+                  complete &&
+                  "border-[var(--parc-border-strong)] bg-[#e9f2d2] text-[var(--parc-heading)]",
                   !current &&
-                    !complete &&
-                    "border-[var(--parc-border)] bg-white text-muted-foreground hover:border-[var(--parc-border-strong)] hover:text-[var(--parc-heading)]"
+                  !complete &&
+                  "border-[var(--parc-border)] bg-white text-muted-foreground hover:border-[var(--parc-border-strong)] hover:text-[var(--parc-heading)]"
                 )}
               >
                 {!current && !complete && fill > 0 ? (
@@ -330,14 +333,12 @@ function AssessmentMap({
 }
 
 function QuizToolbar({
-  sectionLabel,
   progressPercent,
   answers,
   sectionIndex,
   isReview,
   onSelectSection,
 }: {
-  sectionLabel: string;
   progressPercent: number;
   answers: Answers;
   sectionIndex: number;
@@ -346,9 +347,6 @@ function QuizToolbar({
 }) {
   return (
     <div className="space-y-2.5">
-      <p className="text-xs font-medium text-[var(--parc-heading)] sm:text-sm">
-        {sectionLabel}
-      </p>
       <Progress value={progressPercent} className="h-1.5 w-full" />
       <AssessmentMap
         answers={answers}
@@ -440,13 +438,6 @@ export function AssessmentForm() {
       ? Math.round((completedSectionCount(answers) / SECTIONS.length) * 100)
       : sectionProgressPercent(answers, sectionIndex);
 
-  const toolbarSectionLabel = useMemo(() => {
-    if (phase === "review") return "Review";
-    if (!currentSection) return "Assessment";
-    const part = currentSection.part === "dominance" ? "Part 1" : "Part 2";
-    return `${part} · ${NATURE_LABELS[currentSection.nature]}`;
-  }, [phase, currentSection]);
-
   function goToSection(index: number) {
     setSectionIndex(index);
     setActiveQuestionId(null);
@@ -533,7 +524,6 @@ export function AssessmentForm() {
 
   const quizToolbar = (
     <QuizToolbar
-      sectionLabel={toolbarSectionLabel}
       progressPercent={progressPercent}
       answers={answers}
       sectionIndex={sectionIndex}
@@ -562,8 +552,8 @@ export function AssessmentForm() {
             <CardHeader>
               <CardTitle>Your results</CardTitle>
               <CardDescription>
-                Your Nature Assessment profile is ready. Send the email that
-                opened to share results with your practitioner.
+                Your Personality Type Assessment profile is ready. Send the
+                email that opened to share results with your practitioner.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -612,6 +602,29 @@ export function AssessmentForm() {
                     </ul>
                   </div>
 
+                  <div className="space-y-4 rounded-lg border border-border/60 p-4">
+                    <h3 className="text-sm font-medium text-[var(--parc-heading)]">
+                      {results.dominantNatureLabel} nature
+                    </h3>
+                    <p className="text-sm leading-relaxed text-muted-foreground">
+                      {
+                        NATURE_DOMINANCE_DESCRIPTIONS[results.dominantNature]
+                          .balanced
+                      }
+                    </p>
+                    <div className="space-y-1.5">
+                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                        Excessive {results.dominantNatureLabel.toLowerCase()}
+                      </p>
+                      <p className="text-sm leading-relaxed text-muted-foreground">
+                        {
+                          NATURE_DOMINANCE_DESCRIPTIONS[results.dominantNature]
+                            .excess
+                        }
+                      </p>
+                    </div>
+                  </div>
+
                   <div className="space-y-3">
                     <h3 className="text-sm font-medium text-[var(--parc-heading)]">
                       Part 2 — Deficiency
@@ -637,6 +650,40 @@ export function AssessmentForm() {
                         </li>
                       ))}
                     </ul>
+                  </div>
+
+                  <div className="space-y-4 rounded-lg border border-border/60 p-4">
+                    <h3 className="text-sm font-medium text-[var(--parc-heading)]">
+                      Deficient {results.mostDeficientNatureLabel}
+                    </h3>
+                    <p className="text-sm leading-relaxed text-muted-foreground">
+                      {
+                        NATURE_DEFICIENCY_DESCRIPTIONS[
+                          results.mostDeficientNature
+                        ].intro
+                      }
+                    </p>
+                    {(
+                      [
+                        ["Physical issues", "physical"],
+                        ["Personality issues", "personality"],
+                        ["Memory issues", "memory"],
+                        ["Attention issues", "attention"],
+                      ] as const
+                    ).map(([label, key]) => (
+                      <div key={key} className="space-y-1.5">
+                        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                          {label}
+                        </p>
+                        <p className="text-sm leading-relaxed text-muted-foreground">
+                          {
+                            NATURE_DEFICIENCY_DESCRIPTIONS[
+                            results.mostDeficientNature
+                            ][key]
+                          }
+                        </p>
+                      </div>
+                    ))}
                   </div>
 
                   <p className="text-xs text-muted-foreground">
@@ -727,25 +774,34 @@ export function AssessmentForm() {
 
     return (
       <AppShell>
-        <Card className={cn("mx-auto w-full max-w-lg", ENTER_ANIMATION)}>
+        <Card className={cn("mx-auto w-full max-w-2xl", ENTER_ANIMATION)}>
           <CardHeader>
-            <CardTitle>Nature Assessment</CardTitle>
-            <CardDescription>
-              True/false statements about how you think, feel, and live.
-            </CardDescription>
+            <CardTitle>Personality Type Assessment</CardTitle>
+            <CardDescription>Neurotransmitter Assessment</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="space-y-2 rounded-lg bg-muted/50 p-4 text-sm leading-relaxed text-muted-foreground">
+            <div className="space-y-3 rounded-lg bg-muted/50 p-4 text-sm leading-relaxed text-muted-foreground">
               <p>
-                Takes about 15–20 minutes. Answer instinctively — there are no
-                wrong answers.
+                To further enhance our work on your health and fitness goals, we
+                introduce you to the Braverman Test. This assessment tool,
+                developed by Dr. Eric Braverman, helps determine your
+                neurotransmitter dominance and identifies potential deficiencies
+                that might affect your mood, focus, and energy levels, and so
+                many other aspects.
               </p>
               <p>
-                Part 1 is how you feel <em>most of the time</em>. Part 2 is how
-                you feel <em>right now</em>. When you finish, you&apos;ll see
-                your results and can email a copy to your practitioner.
+                Understanding your brain&apos;s chemical makeup can be
+                incredibly insightful, guiding us to tailor your diet and
+                lifestyle and even training modifications more effectively. The
+                test focuses on four primary neurotransmitters: dopamine,
+                acetylcholine, GABA, and serotonin, each playing a crucial role
+                in your overall well-being.
               </p>
-              <p>Your progress is saved automatically on this device.</p>
+              <p>
+                Click &apos;Submit&apos; after the completion of the test. This
+                will help us discuss and incorporate the findings into your
+                personalized wellness plan.
+              </p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="patient-name">Your full name</Label>
@@ -901,63 +957,63 @@ export function AssessmentForm() {
           </div>
 
           {subcategoryGroups.map((group) => (
-              <div key={group.subcategory}>
-                <div className="border-t border-b border-[var(--parc-border)] bg-muted/25 px-3 py-2 sm:px-4">
-                  <p className="text-sm font-semibold tracking-tight text-[var(--parc-heading)] sm:text-base">
-                    {group.label}
-                  </p>
-                </div>
-                {group.questions.map((q) => {
-                  const answer = answers[q.id];
-                  const isActive = activeQuestionId === q.id;
-                  return (
-                    <div
-                      key={q.id}
-                      ref={isActive ? activeRowRef : null}
-                      className={cn(
-                        "flex items-start gap-2 border-b border-[var(--parc-border)] px-3 py-1.5 last:border-b-0 sm:items-center sm:px-4 sm:py-1",
-                        isActive && "bg-[#e9f2d2]/40"
-                      )}
-                    >
-                      <p className="min-w-0 flex-1 text-[13px] leading-snug text-[var(--parc-heading)] sm:text-sm">
-                        {q.text}
-                      </p>
-                      <div
-                        className="inline-flex shrink-0 gap-0.5 rounded-md border border-[var(--parc-border)] p-0.5"
-                        role="group"
-                        aria-label={q.text}
-                      >
-                        <button
-                          type="button"
-                          aria-pressed={answer === true}
-                          onClick={() => setSectionAnswer(q.id, true)}
-                          className={cn(
-                            "h-7 w-8 rounded text-[11px] font-semibold transition-colors sm:w-9",
-                            answer === true
-                              ? "bg-[var(--parc-button-bg)] text-white"
-                              : "text-muted-foreground hover:bg-muted hover:text-[var(--parc-heading)]"
-                          )}
-                        >
-                          T
-                        </button>
-                        <button
-                          type="button"
-                          aria-pressed={answer === false}
-                          onClick={() => setSectionAnswer(q.id, false)}
-                          className={cn(
-                            "h-7 w-8 rounded text-[11px] font-semibold transition-colors sm:w-9",
-                            answer === false
-                              ? "bg-[var(--parc-button-bg)] text-white"
-                              : "text-muted-foreground hover:bg-muted hover:text-[var(--parc-heading)]"
-                          )}
-                        >
-                          F
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
+            <div key={group.subcategory}>
+              <div className="border-t border-b border-[var(--parc-border)] bg-muted/25 px-3 py-2 sm:px-4">
+                <p className="text-sm font-semibold tracking-tight text-[var(--parc-heading)] sm:text-base">
+                  {group.label}
+                </p>
               </div>
+              {group.questions.map((q) => {
+                const answer = answers[q.id];
+                const isActive = activeQuestionId === q.id;
+                return (
+                  <div
+                    key={q.id}
+                    ref={isActive ? activeRowRef : null}
+                    className={cn(
+                      "flex items-start gap-2 border-b border-[var(--parc-border)] px-3 py-1.5 last:border-b-0 sm:items-center sm:px-4 sm:py-1",
+                      isActive && "bg-[#e9f2d2]/40"
+                    )}
+                  >
+                    <p className="min-w-0 flex-1 text-[13px] leading-snug text-[var(--parc-heading)] sm:text-sm">
+                      {q.text}
+                    </p>
+                    <div
+                      className="inline-flex shrink-0 gap-0.5 rounded-md border border-[var(--parc-border)] p-0.5"
+                      role="group"
+                      aria-label={q.text}
+                    >
+                      <button
+                        type="button"
+                        aria-pressed={answer === true}
+                        onClick={() => setSectionAnswer(q.id, true)}
+                        className={cn(
+                          "h-7 w-8 rounded text-[11px] font-semibold transition-colors sm:w-9",
+                          answer === true
+                            ? "bg-[var(--parc-button-bg)] text-white"
+                            : "text-muted-foreground hover:bg-muted hover:text-[var(--parc-heading)]"
+                        )}
+                      >
+                        T
+                      </button>
+                      <button
+                        type="button"
+                        aria-pressed={answer === false}
+                        onClick={() => setSectionAnswer(q.id, false)}
+                        className={cn(
+                          "h-7 w-8 rounded text-[11px] font-semibold transition-colors sm:w-9",
+                          answer === false
+                            ? "bg-[var(--parc-button-bg)] text-white"
+                            : "text-muted-foreground hover:bg-muted hover:text-[var(--parc-heading)]"
+                        )}
+                      >
+                        F
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           ))}
         </div>
 

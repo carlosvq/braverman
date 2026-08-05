@@ -14,7 +14,7 @@ export function buildResultsEmailBody(params: {
   const { patientName, results, submittedAt = new Date() } = params;
 
   return [
-    `Nature Assessment Results`,
+    `Personality Type Assessment Results`,
     `Patient: ${patientName}`,
     `Submitted: ${submittedAt.toUTCString()}`,
     ``,
@@ -42,7 +42,7 @@ export function buildResultsMailto(params: {
   submittedAt?: Date;
 }): string {
   const { patientName, results, submittedAt } = params;
-  const subject = `Nature Assessment results — ${patientName}`;
+  const subject = `Personality Type Assessment results — ${patientName}`;
   const body = buildResultsEmailBody({ patientName, results, submittedAt });
 
   return `mailto:${RESULTS_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;

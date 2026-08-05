@@ -53,70 +53,68 @@ export const SUBCATEGORY_LABELS: Record<SubcategoryId, string> = {
   character: "Character",
 };
 
+const PART1_INSTRUCTIONS =
+  "Answer each question by clicking either T for True or F for False. Answer the questions in terms of how you feel most of the time. For example, if you've had a bad night's sleep and feel tired today, answer the questions that pertain to your energy levels based on how you feel on a more average day.";
+
+const PART2_INSTRUCTIONS =
+  "Answer each question by clicking either T for True or F for False. The second assessment will determine if you are deficient in any of the four biochemicals, including the one that governs your nature. Many of the questions relate to symptoms you might now be experiencing. Answer the questions in terms of how you feel right now; it doesn't matter how long you've been experiencing these symptoms, or even if they occurred today for the first time.";
+
 export const SECTIONS: SectionMeta[] = [
   {
     id: "1A",
     part: "dominance",
     nature: "dopamine",
-    title: "1A — Dopamine Nature",
-    instructions:
-      "Answer based on how you feel most of the time, not just today.",
+    title: "1A — Dopamine",
+    instructions: PART1_INSTRUCTIONS,
   },
   {
     id: "2A",
     part: "dominance",
     nature: "acetylcholine",
-    title: "2A — Acetylcholine Nature",
-    instructions:
-      "Answer based on how you feel most of the time, not just today.",
+    title: "2A — Acetylcholine",
+    instructions: PART1_INSTRUCTIONS,
   },
   {
     id: "3A",
     part: "dominance",
     nature: "gaba",
-    title: "3A — GABA Nature",
-    instructions:
-      "Answer based on how you feel most of the time, not just today.",
+    title: "3A — GABA",
+    instructions: PART1_INSTRUCTIONS,
   },
   {
     id: "4A",
     part: "dominance",
     nature: "serotonin",
-    title: "4A — Serotonin Nature",
-    instructions:
-      "Answer based on how you feel most of the time, not just today.",
+    title: "4A — Serotonin",
+    instructions: PART1_INSTRUCTIONS,
   },
   {
     id: "1B",
     part: "deficiency",
     nature: "dopamine",
-    title: "1B — Dopamine Deficiency",
-    instructions:
-      "Answer based on how you feel right now, even if the symptom is new.",
+    title: "1B — Dopamine",
+    instructions: PART2_INSTRUCTIONS,
   },
   {
     id: "2B",
     part: "deficiency",
     nature: "acetylcholine",
-    title: "2B — Acetylcholine Deficiency",
-    instructions:
-      "Answer based on how you feel right now, even if the symptom is new.",
+    title: "2B — Acetylcholine",
+    instructions: PART2_INSTRUCTIONS,
   },
   {
     id: "3B",
     part: "deficiency",
     nature: "gaba",
-    title: "3B — GABA Deficiency",
-    instructions:
-      "Answer based on how you feel right now, even if the symptom is new.",
+    title: "3B — GABA",
+    instructions: PART2_INSTRUCTIONS,
   },
   {
     id: "4B",
     part: "deficiency",
     nature: "serotonin",
-    title: "4B — Serotonin Deficiency",
-    instructions:
-      "Answer based on how you feel right now, even if the symptom is new.",
+    title: "4B — Serotonin",
+    instructions: PART2_INSTRUCTIONS,
   },
 ];
 
@@ -141,7 +139,7 @@ function buildSection(section: SectionId, groups: SectionGroup[]): Question[] {
   );
 }
 
-/** Nature Assessment question bank. */
+/** Personality Type Assessment question bank (Braverman / The Edge Effect). */
 export const QUESTIONS: Question[] = [
   ...buildSection("1A", [
     {
@@ -182,12 +180,12 @@ export const QUESTIONS: Question[] = [
         "I am a very domineering individual.",
         "I sometimes don't notice my feelings.",
         "I often have trouble listening to others because my own ideas dominate.",
-        "I have been in many physical altercations.",
+        "I have been in many fights.",
         "I tend to be future-oriented.",
         "I am sometimes speculative.",
         "Most people view me as thinking-oriented.",
         "I daydream and often fantasize.",
-        "I like to read history and other nonfiction books.",
+        "I like to read history and other non-fiction books.",
         "I admire ingenuity.",
         "I can be slow in identifying how people can cause trouble.",
         "I don't usually get tricked by people who say they need my help.",
@@ -197,7 +195,7 @@ export const QUESTIONS: Question[] = [
         "Little things make me anxious or upset.",
         "I have fantasies of unlimited power.",
         "I love spending money.",
-        "I dominate others in my relationships.",
+        "I dominate others in relationships.",
         "I am very hard on myself.",
         "I react aggressively to criticism, often becoming defensive in front of others.",
       ],
@@ -236,10 +234,10 @@ export const QUESTIONS: Question[] = [
         "I tend to have a slow pulse.",
         "My body has excellent tone.",
         "I have a great figure/build.",
-        "I have low cholesterol.",
+        "I have really low cholesterol.",
         "When I eat, I love to experience the aromas and the beauty of food.",
         "I love yoga and stretching my muscles.",
-        "During sex I am very sensual.",
+        "During sex, I am very sensual.",
         "I have had an eating disorder at some point in my life.",
         "I have tried many alternative remedies.",
       ],
@@ -261,7 +259,7 @@ export const QUESTIONS: Question[] = [
         "I believe in being a soul mate.",
         "Sometimes the mystical can excite me.",
         "I tend to overreact to my body.",
-        "I find it easy to change; I am not set in my ways.",
+        "I find it easy to change things; I am not set in my ways.",
         "I am deeply in touch with my emotions.",
         "I tend to love someone one minute and hate him or her the next.",
         "I am flirtatious.",
@@ -280,7 +278,7 @@ export const QUESTIONS: Question[] = [
         "I believe that all things are possible, particularly for those who are devoted.",
         "I am good at creating harmony between people.",
         "Charity and altruism come from the heart, and I have plenty of both.",
-        "Others think of me as having vision.",
+        "Others think me of as having vision.",
         "My thoughts on religion often change.",
         "I am an idealist, but not a perfectionist.",
         "I'm happy with someone who just treats me right.",
@@ -327,7 +325,7 @@ export const QUESTIONS: Question[] = [
         "I don't enjoy philosophy.",
         "I love watching sitcoms about families.",
         "I dislike movies about other worlds or universes.",
-        "I am not a risk taker.",
+        "I am not a risk-taker.",
         "I keep past experiences in mind before I make decisions.",
         "I am a realistic person.",
         "I believe in closure.",
@@ -336,7 +334,7 @@ export const QUESTIONS: Question[] = [
         "I like to plan my day, week, month, etc.",
         "I collect things.",
         "I am a little sad.",
-        "I'm afraid of confrontations and altercations.",
+        "I am afraid of confrontations and altercations.",
         "I save up a lot of money in the event of a crisis.",
         "I tend to create strong, lasting bonds with others.",
         "I am a stable pillar in people's lives.",
@@ -351,7 +349,7 @@ export const QUESTIONS: Question[] = [
         "I am a perfectionist.",
         "I am good at maintaining long-lasting relationships.",
         "I pay attention to where my money goes.",
-        "I believe that the world would be more peaceful if people would improve their morals.",
+        "I believe that the world would be more peaceful if people would improve upon their morals.",
         "I am very loyal and devoted to my loved ones.",
         "I have high ethical standards that I live by.",
         "I pay close attention to laws, principles, and policies.",
@@ -365,7 +363,7 @@ export const QUESTIONS: Question[] = [
       texts: [
         "I can easily concentrate on manual-labor tasks.",
         "I have a good visual memory.",
-        "I am very receptive.",
+        "I am very perceptive.",
         "I am an impulsive thinker.",
         "I live in the here and now.",
         'I tend to say, "Tell me the bottom line."',
@@ -386,7 +384,7 @@ export const QUESTIONS: Question[] = [
         "I can solve problems spontaneously.",
         "I rarely have carbohydrate cravings.",
         "I usually grab a quick meal on the run.",
-        "I'm not very consistent with my exercise routine; I may exercise daily for three weeks and then skip it for a month.",
+        "I'm usually not very consistent with my exercise routine; I may exercise daily for three weeks and then skip it for a month.",
       ],
     },
     {
@@ -406,7 +404,7 @@ export const QUESTIONS: Question[] = [
         "I can easily take advantage of others.",
         "I am cynical of others' philosophies.",
         "I like to have fun.",
-        "My favorite types of movies are horror flicks.",
+        "My favorite type of movies are horror flicks.",
         "I am fascinated with weapons.",
         "I rarely stick to a plan or agenda.",
         "I have trouble remaining faithful.",
@@ -454,7 +452,7 @@ export const QUESTIONS: Question[] = [
         "I sometimes experience total exhaustion without even exerting myself.",
         "I have always battled weight problems.",
         "I have little motivation for sexual experiences.",
-        "I have trouble getting out of bed in the morning.",
+        "I have little trouble getting out of bed in the morning.",
         "I have had a craving for cocaine, amphetamines, or Ecstasy.",
       ],
     },
@@ -475,6 +473,7 @@ export const QUESTIONS: Question[] = [
       texts: [
         "I have lost my reasoning skills.",
         "I can't make good decisions.",
+        "I don't pay attention to people's feelings.",
       ],
     },
   ]),
@@ -486,7 +485,7 @@ export const QUESTIONS: Question[] = [
         "I have difficulty remembering names when I first meet people.",
         "I have noticed that my memory ability is decreasing.",
         "My significant other tells me I don't have romantic thoughts.",
-        "I can't remember my friends' birthdays.",
+        "I can't remember my friend's birthday.",
         "I have lost some of my creativity.",
       ],
     },
@@ -496,7 +495,7 @@ export const QUESTIONS: Question[] = [
         "I have insomnia.",
         "I have lost muscle tone.",
         "I don't exercise anymore.",
-        "I crave fatty foods.",
+        "I crave fatty food.",
         "I have experimented with hallucinogens or other illicit drugs.",
         "I feel like my body is falling apart.",
         "I can't breathe easily.",
@@ -518,8 +517,7 @@ export const QUESTIONS: Question[] = [
     {
       subcategory: "character",
       texts: [
-        "I don't care about anyone's stories but mine.",
-        "I don't pay attention to people's feelings.",
+        "I don't care about anyone's stories but my own.",
         "I don't feel buoyant.",
         "I'm obsessed with my deficiencies.",
       ],
@@ -580,7 +578,7 @@ export const QUESTIONS: Question[] = [
       subcategory: "character",
       texts: [
         "I don't play by the rules anymore.",
-        "I have lost many friends.",
+        "I have lost my friends.",
         "I can't sustain romantic relationships.",
         "I consider the law arbitrary and without reason.",
         "I now consider rules that I used to follow ridiculous.",

@@ -3,9 +3,17 @@ import { inter } from "./fonts";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Nature Assessment | PARC",
+  title: "Personality Type Assessment | PARC",
   description:
-    "Complete the Nature Assessment online. Results are sent to your practitioner.",
+    "Complete the Personality Type Assessment (Braverman) online. Results are sent to your practitioner.",
+  robots: {
+    index: false,
+    follow: false,
+    googleBot: {
+      index: false,
+      follow: false,
+    },
+  },
 };
 
 export default function RootLayout({
