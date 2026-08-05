@@ -8,14 +8,17 @@ export const RESULTS_EMAIL =
 
 export function buildResultsEmailBody(params: {
   patientName: string;
+  patientEmail: string;
   results: AssessmentResults;
   submittedAt?: Date;
 }): string {
-  const { patientName, results, submittedAt = new Date() } = params;
+  const { patientName, patientEmail, results, submittedAt = new Date() } =
+    params;
 
   return [
     `Personality Type Assessment Results`,
     `Patient: ${patientName}`,
+    `Email: ${patientEmail}`,
     `Submitted: ${submittedAt.toUTCString()}`,
     ``,
     `Dominant nature: ${results.dominantNatureLabel}`,
@@ -38,18 +41,25 @@ export function buildResultsEmailBody(params: {
 
 export function buildResultsMailto(params: {
   patientName: string;
+  patientEmail: string;
   results: AssessmentResults;
   submittedAt?: Date;
 }): string {
-  const { patientName, results, submittedAt } = params;
+  const { patientName, patientEmail, results, submittedAt } = params;
   const subject = `Personality Type Assessment results — ${patientName}`;
-  const body = buildResultsEmailBody({ patientName, results, submittedAt });
+  const body = buildResultsEmailBody({
+    patientName,
+    patientEmail,
+    results,
+    submittedAt,
+  });
 
   return `mailto:${RESULTS_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 
 export function openResultsMailto(params: {
   patientName: string;
+  patientEmail: string;
   results: AssessmentResults;
   submittedAt?: Date;
 }): void {

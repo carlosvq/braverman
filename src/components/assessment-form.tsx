@@ -49,6 +49,7 @@ import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 
 const STORAGE_KEY = "nature-assessment-v1";
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const ENTER_ANIMATION =
   "motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-300 motion-safe:ease-out";
@@ -64,7 +65,11 @@ const VALID_QUESTION_IDS = new Set(QUESTIONS.map((q) => q.id));
 type Phase = "start" | "quiz" | "review" | "done";
 
 type PersistedState = {
-  name: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  /** @deprecated older saves used a single full-name field */
+  name?: string;
   answers: Answers;
   phase: Phase;
   sectionIndex: number;
@@ -73,6 +78,26 @@ type PersistedState = {
   /** @deprecated older saves */
   questionIndex?: number;
 };
+
+function isValidEmail(value: string): boolean {
+  return EMAIL_PATTERN.test(value.trim());
+}
+
+function patientDetailsComplete(
+  firstName: string,
+  lastName: string,
+  email: string
+): boolean {
+  return (
+    firstName.trim().length > 0 &&
+    lastName.trim().length > 0 &&
+    isValidEmail(email)
+  );
+}
+
+function formatPatientName(firstName: string, lastName: string): string {
+  return `${firstName.trim()} ${lastName.trim()}`.trim();
+}
 
 function firstUnansweredSectionIndex(answers: Answers): number {
   const idx = SECTIONS.findIndex(
@@ -359,7 +384,9 @@ function QuizToolbar({
 }
 
 export function AssessmentForm() {
-  const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
   const [answers, setAnswers] = useState<Answers>({});
   const [phase, setPhase] = useState<Phase>("start");
   const [sectionIndex, setSectionIndex] = useState(0);
@@ -370,13 +397,24 @@ export function AssessmentForm() {
   const [results, setResults] = useState<AssessmentResults | null>(null);
   const activeRowRef = useRef<HTMLDivElement | null>(null);
 
+  const patientName = formatPatientName(firstName, lastName);
+  const detailsComplete = patientDetailsComplete(firstName, lastName, email);
+
   useEffect(() => {
     let cancelled = false;
     queueMicrotask(() => {
       if (cancelled) return;
       const parsed = readStoredProgress();
       if (parsed) {
-        if (parsed.name) setName(parsed.name);
+        if (parsed.firstName || parsed.lastName || parsed.email) {
+          if (parsed.firstName) setFirstName(parsed.firstName);
+          if (parsed.lastName) setLastName(parsed.lastName);
+          if (parsed.email) setEmail(parsed.email);
+        } else if (parsed.name) {
+          const parts = parsed.name.trim().split(/\s+/);
+          setFirstName(parts[0] ?? "");
+          setLastName(parts.slice(1).join(" "));
+        }
         const cleaned = pruneAnswers(parsed.answers);
         if (Object.keys(cleaned).length > 0) setAnswers(cleaned);
         if (parsed.phase === "review" && Object.keys(cleaned).length > 0) {
@@ -404,7 +442,9 @@ export function AssessmentForm() {
   useEffect(() => {
     if (!hydrated || phase === "done") return;
     const payload: PersistedState = {
-      name,
+      firstName,
+      lastName,
+      email,
       answers,
       phase,
       sectionIndex,
@@ -414,7 +454,7 @@ export function AssessmentForm() {
     } catch {
       // ignore quota / private mode errors
     }
-  }, [name, answers, phase, sectionIndex, hydrated]);
+  }, [firstName, lastName, email, answers, phase, sectionIndex, hydrated]);
 
   useEffect(() => {
     if (phase !== "quiz") return;
@@ -478,6 +518,10 @@ export function AssessmentForm() {
   }
 
   function startQuiz() {
+    if (!detailsComplete) {
+      setError("Please enter your name, last name, and a valid email address.");
+      return;
+    }
     if (answered > 0) {
       resumeSession();
       return;
@@ -491,7 +535,9 @@ export function AssessmentForm() {
     setError(null);
     setResults(null);
     clearStoredProgress();
-    setName("");
+    setFirstName("");
+    setLastName("");
+    setEmail("");
     setAnswers({});
     setSectionIndex(0);
     setActiveQuestionId(null);
@@ -502,9 +548,10 @@ export function AssessmentForm() {
     setError(null);
     setSubmitting(true);
     try {
-      const patientName = name.trim();
-      if (patientName.length < 2) {
-        throw new Error("Please provide your full name.");
+      if (!detailsComplete) {
+        throw new Error(
+          "Please enter your name, last name, and a valid email address."
+        );
       }
       const validationError = validateAnswers(answers);
       if (validationError) {
@@ -514,7 +561,11 @@ export function AssessmentForm() {
       clearStoredProgress();
       setResults(scored);
       setPhase("done");
-      openResultsMailto({ patientName, results: scored });
+      openResultsMailto({
+        patientName,
+        patientEmail: email.trim(),
+        results: scored,
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Submission failed.");
     } finally {
@@ -704,7 +755,8 @@ export function AssessmentForm() {
                   className="w-full"
                   onClick={() =>
                     openResultsMailto({
-                      patientName: name.trim(),
+                      patientName,
+                      patientEmail: email.trim(),
                       results,
                     })
                   }
@@ -736,7 +788,11 @@ export function AssessmentForm() {
               <div className="rounded-lg bg-muted/50 p-4 text-sm leading-relaxed">
                 <p>
                   <span className="text-muted-foreground">Name:</span>{" "}
-                  <strong>{name.trim() || "Not set"}</strong>
+                  <strong>{patientName || "Not set"}</strong>
+                </p>
+                <p className="mt-1">
+                  <span className="text-muted-foreground">Email:</span>{" "}
+                  <strong>{email.trim() || "Not set"}</strong>
                 </p>
                 <p className="mt-2">
                   <span className="text-muted-foreground">Progress</span>
@@ -803,19 +859,51 @@ export function AssessmentForm() {
                 personalized wellness plan.
               </p>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="patient-name">Your full name</Label>
-              <Input
-                id="patient-name"
-                autoComplete="name"
-                placeholder="First and last name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && name.trim().length >= 2) startQuiz();
-                }}
-              />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="patient-first-name">Name</Label>
+                <Input
+                  id="patient-first-name"
+                  autoComplete="given-name"
+                  placeholder="First name"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="patient-last-name">Last name</Label>
+                <Input
+                  id="patient-last-name"
+                  autoComplete="family-name"
+                  placeholder="Last name"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2 sm:col-span-2">
+                <Label htmlFor="patient-email">Email</Label>
+                <Input
+                  id="patient-email"
+                  type="email"
+                  autoComplete="email"
+                  inputMode="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && detailsComplete) startQuiz();
+                  }}
+                  required
+                />
+              </div>
             </div>
+            {error ? (
+              <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                {error}
+              </p>
+            ) : null}
             <p className="text-xs text-muted-foreground">
               This is not a medical diagnosis.
             </p>
@@ -824,7 +912,7 @@ export function AssessmentForm() {
             <Button
               size="lg"
               className="w-full"
-              disabled={name.trim().length < 2}
+              disabled={!detailsComplete}
               onClick={startQuiz}
             >
               Start
@@ -851,7 +939,11 @@ export function AssessmentForm() {
             <div className="space-y-1 text-sm">
               <p>
                 <span className="text-muted-foreground">Name:</span>{" "}
-                <strong>{name.trim()}</strong>
+                <strong>{patientName}</strong>
+              </p>
+              <p>
+                <span className="text-muted-foreground">Email:</span>{" "}
+                <strong>{email.trim()}</strong>
               </p>
             </div>
             <Separator />
