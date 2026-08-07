@@ -39,6 +39,7 @@ export async function saveAssessment(input: {
     results: input.results,
     dominant_nature: input.results.dominantNature,
     most_deficient_nature: input.results.mostDeficientNature,
+    completed_at: new Date().toISOString(),
   });
 
   if (insertError) {

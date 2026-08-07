@@ -3,6 +3,7 @@ import { NATURE_LABELS, type Nature } from "@/data/questions";
 import { requireCoach } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { DashboardHeader } from "@/components/dashboard-header";
+import { DeleteParticipantButton } from "@/components/delete-confirm-dialog";
 import { InviteForm } from "@/components/invite-form";
 import {
   Card,
@@ -52,7 +53,7 @@ export default async function DashboardPage() {
     .order("invited_at", { ascending: false });
 
   const participantIds = (profiles ?? []).map((p) => p.id);
-  let latestByUser = new Map<string, AssessmentRow>();
+  const latestByUser = new Map<string, AssessmentRow>();
 
   if (participantIds.length > 0) {
     const { data: assessments } = await supabase
@@ -103,24 +104,27 @@ export default async function DashboardPage() {
               </p>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[640px] text-left text-sm">
+                <table className="w-full min-w-[720px] text-left text-sm">
                   <thead>
                     <tr className="border-b border-border text-xs uppercase tracking-wide text-muted-foreground">
                       <th className="py-2 pr-3 font-medium">Name</th>
                       <th className="py-2 pr-3 font-medium">Email</th>
                       <th className="py-2 pr-3 font-medium">Status</th>
                       <th className="py-2 pr-3 font-medium">Dominant</th>
-                      <th className="py-2 font-medium">Completed</th>
+                      <th className="py-2 pr-3 font-medium">Completed</th>
+                      <th className="py-2 font-medium">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {people.map((person) => {
                       const latest = latestByUser.get(person.id);
                       const completed = Boolean(latest);
+                      const label =
+                        person.full_name?.trim() || person.email || "this participant";
                       return (
                         <tr
                           key={person.id}
-                          className="relative cursor-pointer border-b border-border/60 transition-colors last:border-0 hover:bg-muted/50"
+                          className="relative border-b border-border/60 transition-colors last:border-0 hover:bg-muted/50"
                         >
                           <td className="py-3 pr-3">
                             <Link
@@ -141,8 +145,14 @@ export default async function DashboardPage() {
                           <td className="py-3 pr-3">
                             {natureLabel(latest?.dominant_nature ?? null)}
                           </td>
-                          <td className="py-3">
+                          <td className="py-3 pr-3">
                             {formatDate(latest?.completed_at)}
+                          </td>
+                          <td className="relative z-10 py-3">
+                            <DeleteParticipantButton
+                              userId={person.id}
+                              participantLabel={label}
+                            />
                           </td>
                         </tr>
                       );

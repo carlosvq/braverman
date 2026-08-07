@@ -10,7 +10,7 @@ import {
 } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Check, ChevronLeft, ChevronRight, Mail } from "lucide-react";
+import { ArrowRight, Check, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   NATURE_LABELS,
   QUESTIONS,
@@ -20,7 +20,6 @@ import {
   SUBCATEGORY_ORDER,
   type SectionId,
 } from "@/data/questions";
-import { openResultsMailto } from "@/lib/email";
 import {
   answeredCount,
   scoreAnswers,
@@ -662,25 +661,6 @@ export function AssessmentForm({
                 </p>
               )}
             </CardContent>
-            {results ? (
-              <CardFooter>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="w-full"
-                  onClick={() =>
-                    openResultsMailto({
-                      patientName,
-                      patientEmail: email.trim(),
-                      results,
-                    })
-                  }
-                >
-                  <Mail data-icon="inline-start" />
-                  Email a copy (optional)
-                </Button>
-              </CardFooter>
-            ) : null}
           </Card>
         </div>
       </AppShell>
@@ -896,8 +876,8 @@ export function AssessmentForm({
               </p>
             ) : null}
             <p className="text-sm text-muted-foreground">
-              After you submit, your scores appear on this page. A copy is also
-              emailed to your practitioner.
+              After you submit, your scores appear on this page and are saved
+              for your coach to review in their dashboard.
             </p>
           </CardContent>
           <CardFooter className="flex flex-wrap gap-2">
