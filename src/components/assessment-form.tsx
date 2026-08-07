@@ -331,10 +331,13 @@ function AssessmentMap({
                   "border-[var(--parc-border)] bg-white text-muted-foreground hover:border-[var(--parc-border-strong)] hover:text-[var(--parc-heading)]"
                 )}
               >
-                {!current && !complete && fill > 0 ? (
+                {!complete && fill > 0 ? (
                   <span
                     aria-hidden
-                    className="absolute inset-y-0 left-0 bg-[#e9f2d2]/70"
+                    className={cn(
+                      "absolute inset-y-0 left-0",
+                      current ? "bg-white/25" : "bg-[#e9f2d2]/70"
+                    )}
                     style={{ width: `${fill}%` }}
                   />
                 ) : null}
@@ -486,7 +489,14 @@ export function AssessmentForm() {
   }
 
   function setSectionAnswer(questionId: string, value: boolean) {
-    setAnswers((prev) => ({ ...prev, [questionId]: value }));
+    setAnswers((prev) => {
+      if (prev[questionId] === value) {
+        const next = { ...prev };
+        delete next[questionId];
+        return next;
+      }
+      return { ...prev, [questionId]: value };
+    });
     setActiveQuestionId(questionId);
   }
 
