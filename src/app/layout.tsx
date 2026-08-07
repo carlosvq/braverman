@@ -5,7 +5,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Personality Type Assessment | PARC",
   description:
-    "Complete the Personality Type Assessment (Braverman) online. Results are sent to your practitioner.",
+    "Invite-only Personality Type Assessment (Braverman). Coaches sign in at /coach/login; participants use /new with an invite code.",
   robots: {
     index: false,
     follow: false,

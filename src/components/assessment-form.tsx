@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { ArrowRight, Check, ChevronLeft, ChevronRight, Mail } from "lucide-react";
 import {
   NATURE_LABELS,
@@ -19,20 +20,18 @@ import {
   SUBCATEGORY_ORDER,
   type SectionId,
 } from "@/data/questions";
-import {
-  NATURE_DEFICIENCY_DESCRIPTIONS,
-  NATURE_DOMINANCE_DESCRIPTIONS,
-} from "@/data/nature-descriptions";
 import { openResultsMailto } from "@/lib/email";
 import {
   answeredCount,
   scoreAnswers,
   sectionFullyAnswered,
-  severityLabel,
   validateAnswers,
   type Answers,
   type AssessmentResults,
 } from "@/lib/scoring";
+import { saveAssessment } from "@/app/actions/assessment";
+import { ResultsDisplay } from "@/components/results-display";
+import { SignOutButton } from "@/components/sign-out-button";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -203,10 +202,12 @@ function AppShell({
   children,
   toolbar,
   className,
+  isCoach = false,
 }: {
   children: ReactNode;
   toolbar?: ReactNode;
   className?: string;
+  isCoach?: boolean;
 }) {
   const headerRef = useRef<HTMLElement | null>(null);
 
@@ -235,23 +236,36 @@ function AppShell({
         className="sticky top-0 z-50 border-b border-[var(--parc-border)] bg-[var(--parc-bg)]"
       >
         <div className="mx-auto flex w-full max-w-5xl flex-col gap-3 px-4 py-2.5 sm:px-6">
-          <div className="flex items-center gap-2.5 sm:gap-3">
-            <Image
-              src="/logo.svg"
-              alt="PARC"
-              width={LOGO_WIDTH}
-              height={LOGO_HEIGHT}
-              priority
-              className="h-5 w-auto sm:h-6"
-              style={{
-                maxWidth: `${LOGO_WIDTH}px`,
-                filter: LOGO_FILTER,
-              }}
-            />
-            <div className="min-w-0 border-l border-[var(--parc-border-strong)] pl-2.5 sm:pl-3">
-              <h1 className="text-xs font-medium text-[var(--parc-heading)] sm:text-sm">
-                Braverman Test
-              </h1>
+          <div className="flex items-center justify-between gap-2.5 sm:gap-3">
+            <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
+              <Image
+                src="/logo.svg"
+                alt="PARC"
+                width={LOGO_WIDTH}
+                height={LOGO_HEIGHT}
+                priority
+                className="h-5 w-auto sm:h-6"
+                style={{
+                  maxWidth: `${LOGO_WIDTH}px`,
+                  filter: LOGO_FILTER,
+                }}
+              />
+              <div className="min-w-0 border-l border-[var(--parc-border-strong)] pl-2.5 sm:pl-3">
+                <h1 className="text-xs font-medium text-[var(--parc-heading)] sm:text-sm">
+                  Braverman Test
+                </h1>
+              </div>
+            </div>
+            <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+              {isCoach ? (
+                <Link
+                  href="/dashboard"
+                  className="px-2 text-sm text-muted-foreground transition-colors hover:text-[var(--parc-heading)]"
+                >
+                  Dashboard
+                </Link>
+              ) : null}
+              <SignOutButton />
             </div>
           </div>
           {toolbar}
@@ -386,10 +400,22 @@ function QuizToolbar({
   );
 }
 
-export function AssessmentForm() {
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("");
+export type AssessmentFormProps = {
+  initialFirstName?: string;
+  initialLastName?: string;
+  initialEmail?: string;
+  isCoach?: boolean;
+};
+
+export function AssessmentForm({
+  initialFirstName = "",
+  initialLastName = "",
+  initialEmail = "",
+  isCoach = false,
+}: AssessmentFormProps) {
+  const [firstName, setFirstName] = useState(initialFirstName);
+  const [lastName, setLastName] = useState(initialLastName);
+  const [email, setEmail] = useState(initialEmail);
   const [answers, setAnswers] = useState<Answers>({});
   const [phase, setPhase] = useState<Phase>("start");
   const [sectionIndex, setSectionIndex] = useState(0);
@@ -435,12 +461,18 @@ export function AssessmentForm() {
         }
         setPhase("start");
       }
+
+      // Authenticated profile wins for identity fields.
+      if (initialFirstName) setFirstName(initialFirstName);
+      if (initialLastName) setLastName(initialLastName);
+      if (initialEmail) setEmail(initialEmail);
+
       setHydrated(true);
     });
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [initialEmail, initialFirstName, initialLastName]);
 
   useEffect(() => {
     if (!hydrated || phase === "done") return;
@@ -545,16 +577,16 @@ export function AssessmentForm() {
     setError(null);
     setResults(null);
     clearStoredProgress();
-    setFirstName("");
-    setLastName("");
-    setEmail("");
+    setFirstName(initialFirstName);
+    setLastName(initialLastName);
+    setEmail(initialEmail);
     setAnswers({});
     setSectionIndex(0);
     setActiveQuestionId(null);
     setPhase("start");
   }
 
-  function handleSubmit() {
+  async function handleSubmit() {
     setError(null);
     setSubmitting(true);
     try {
@@ -568,14 +600,18 @@ export function AssessmentForm() {
         throw new Error(validationError);
       }
       const scored = scoreAnswers(answers);
+      const saved = await saveAssessment({
+        firstName,
+        lastName,
+        answers,
+        results: scored,
+      });
+      if (!saved.ok) {
+        throw new Error(saved.error);
+      }
       clearStoredProgress();
       setResults(scored);
       setPhase("done");
-      openResultsMailto({
-        patientName,
-        patientEmail: email.trim(),
-        results: scored,
-      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Submission failed.");
     } finally {
@@ -595,7 +631,7 @@ export function AssessmentForm() {
 
   if (!hydrated) {
     return (
-      <AppShell>
+      <AppShell isCoach={isCoach}>
         <Card className="mx-auto w-full max-w-lg">
           <CardContent className="py-10 text-center text-muted-foreground">
             Loading assessment…
@@ -607,151 +643,19 @@ export function AssessmentForm() {
 
   if (phase === "done") {
     return (
-      <AppShell>
+      <AppShell isCoach={isCoach}>
         <div className={cn("mx-auto w-full max-w-2xl space-y-6", ENTER_ANIMATION)}>
           <Card>
             <CardHeader>
               <CardTitle>Your results</CardTitle>
               <CardDescription>
-                Your Personality Type Assessment profile is ready. Send the
-                email that opened to share results with your practitioner.
+                Your Personality Type Assessment profile is saved. Your coach
+                can view these results in their dashboard.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               {results ? (
-                <>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <div className="rounded-lg bg-muted/50 p-4">
-                      <p className="text-xs font-medium text-muted-foreground">
-                        Dominant nature
-                      </p>
-                      <p className="mt-1 text-lg font-semibold text-[var(--parc-heading)]">
-                        {results.dominantNatureLabel}
-                      </p>
-                    </div>
-                    <div className="rounded-lg bg-muted/50 p-4">
-                      <p className="text-xs font-medium text-muted-foreground">
-                        Most deficient nature
-                      </p>
-                      <p className="mt-1 text-lg font-semibold text-[var(--parc-heading)]">
-                        {results.mostDeficientNatureLabel}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    <h3 className="text-sm font-medium text-[var(--parc-heading)]">
-                      Part 1 — Dominance
-                    </h3>
-                    <ul className="space-y-2 text-sm">
-                      {results.dominance.map((score) => (
-                        <li
-                          key={score.section}
-                          className="flex items-center justify-between gap-4 border-b border-border/60 pb-2 last:border-0 last:pb-0"
-                        >
-                          <span>
-                            {score.section} {score.natureLabel}
-                          </span>
-                          <span className="tabular-nums text-muted-foreground">
-                            <strong className="text-foreground">
-                              {score.trueCount}
-                            </strong>{" "}
-                            / {score.total}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div className="space-y-4 rounded-lg border border-border/60 p-4">
-                    <h3 className="text-sm font-medium text-[var(--parc-heading)]">
-                      {results.dominantNatureLabel} nature
-                    </h3>
-                    <p className="text-sm leading-relaxed text-muted-foreground">
-                      {
-                        NATURE_DOMINANCE_DESCRIPTIONS[results.dominantNature]
-                          .balanced
-                      }
-                    </p>
-                    <div className="space-y-1.5">
-                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                        Excessive {results.dominantNatureLabel.toLowerCase()}
-                      </p>
-                      <p className="text-sm leading-relaxed text-muted-foreground">
-                        {
-                          NATURE_DOMINANCE_DESCRIPTIONS[results.dominantNature]
-                            .excess
-                        }
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    <h3 className="text-sm font-medium text-[var(--parc-heading)]">
-                      Part 2 — Deficiency
-                    </h3>
-                    <ul className="space-y-2 text-sm">
-                      {results.deficiency.map((score) => (
-                        <li
-                          key={score.section}
-                          className="flex items-center justify-between gap-4 border-b border-border/60 pb-2 last:border-0 last:pb-0"
-                        >
-                          <span>
-                            {score.section} {score.natureLabel}
-                          </span>
-                          <span className="text-right tabular-nums text-muted-foreground">
-                            <strong className="text-foreground">
-                              {score.trueCount}
-                            </strong>{" "}
-                            / {score.total}
-                            <span className="mt-0.5 block text-xs">
-                              {severityLabel(score.severity ?? "none")}
-                            </span>
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div className="space-y-4 rounded-lg border border-border/60 p-4">
-                    <h3 className="text-sm font-medium text-[var(--parc-heading)]">
-                      Deficient {results.mostDeficientNatureLabel}
-                    </h3>
-                    <p className="text-sm leading-relaxed text-muted-foreground">
-                      {
-                        NATURE_DEFICIENCY_DESCRIPTIONS[
-                          results.mostDeficientNature
-                        ].intro
-                      }
-                    </p>
-                    {(
-                      [
-                        ["Physical issues", "physical"],
-                        ["Personality issues", "personality"],
-                        ["Memory issues", "memory"],
-                        ["Attention issues", "attention"],
-                      ] as const
-                    ).map(([label, key]) => (
-                      <div key={key} className="space-y-1.5">
-                        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                          {label}
-                        </p>
-                        <p className="text-sm leading-relaxed text-muted-foreground">
-                          {
-                            NATURE_DEFICIENCY_DESCRIPTIONS[
-                            results.mostDeficientNature
-                            ][key]
-                          }
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-
-                  <p className="text-xs text-muted-foreground">
-                    This is not a medical diagnosis. Your practitioner will
-                    review your profile and follow up with you.
-                  </p>
-                </>
+                <ResultsDisplay results={results} />
               ) : (
                 <p className="text-sm text-muted-foreground">
                   Results could not be displayed. Please try again.
@@ -762,6 +666,7 @@ export function AssessmentForm() {
               <CardFooter>
                 <Button
                   size="lg"
+                  variant="outline"
                   className="w-full"
                   onClick={() =>
                     openResultsMailto({
@@ -772,7 +677,7 @@ export function AssessmentForm() {
                   }
                 >
                   <Mail data-icon="inline-start" />
-                  Email results to practitioner
+                  Email a copy (optional)
                 </Button>
               </CardFooter>
             ) : null}
@@ -785,7 +690,7 @@ export function AssessmentForm() {
   if (phase === "start") {
     if (answered > 0) {
       return (
-        <AppShell>
+        <AppShell isCoach={isCoach}>
           <Card className={cn("mx-auto w-full max-w-lg", ENTER_ANIMATION)}>
             <CardHeader>
               <CardTitle>Welcome back</CardTitle>
@@ -839,7 +744,7 @@ export function AssessmentForm() {
     }
 
     return (
-      <AppShell>
+      <AppShell isCoach={isCoach}>
         <Card className={cn("mx-auto w-full max-w-2xl", ENTER_ANIMATION)}>
           <CardHeader>
             <CardTitle>Personality Type Assessment</CardTitle>
@@ -937,7 +842,7 @@ export function AssessmentForm() {
   if (phase === "review") {
     const complete = answered === totalQuestions;
     return (
-      <AppShell toolbar={quizToolbar}>
+      <AppShell toolbar={quizToolbar} isCoach={isCoach}>
         <Card className={cn("mx-auto w-full max-w-2xl", ENTER_ANIMATION)}>
           <CardHeader>
             <CardTitle>Ready to submit</CardTitle>
@@ -1033,7 +938,7 @@ export function AssessmentForm() {
   if (!currentSection) return null;
 
   return (
-    <AppShell toolbar={quizToolbar} className="pb-20">
+    <AppShell toolbar={quizToolbar} className="pb-20" isCoach={isCoach}>
       <div
         key={currentSection.id}
         className={cn("flex flex-1 flex-col gap-3", SWAP_ANIMATION)}
